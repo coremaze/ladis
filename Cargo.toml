@@ -7,5 +7,11 @@ edition = "2021"
 
 [dependencies]
 capstone = "0.11.0"
-clap = { version = "4.0.32", features = ["derive", "wrap_help"] }
+clap = { version = "4.0.32", features = ["derive"] }
 hex = "0.4.3"
+
+[profile.release]
+strip = true
+lto = true
+panic = "abort"
+codegen-units = 1
