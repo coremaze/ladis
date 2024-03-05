@@ -137,6 +137,38 @@ fn get_capstone(arch: Architecture) -> Result<Capstone, Error> {
     }
 }
 
+fn format_bytes(bytes: &[u8]) -> String {
+    const COUNT: usize = 16;
+
+    let mut results = Vec::<String>::new();
+
+    for i in 0..(COUNT.max(bytes.len())) {
+        match bytes.get(i) {
+            Some(b) => results.push(format!("{:02X}", *b)),
+            None => results.push("  ".to_string()),
+        }
+    }
+
+    results.join(" ")
+}
+
+fn display_instruction(ins: &capstone::Insn) {
+    let bytes = format_bytes(ins.bytes());
+    let mnemonic = ins.mnemonic().unwrap_or_default();
+    let asm = if let Some(op) = ins.op_str() {
+        format!("{mnemonic:8} {op}")
+    } else {
+        mnemonic.to_string()
+    };
+    let address = ins.address();
+    println!("{address:04X}: {bytes} {asm}");
+}
+
+fn display_invalid_byte(address: u64, byte: u8) {
+    let bytes = format_bytes(&[byte]);
+    println!("{address:04X}: {bytes} ??");
+}
+
 fn main() {
     let args = Args::parse();
 
@@ -162,13 +194,20 @@ fn main() {
         }
     };
 
-    let instructions = match cs.disasm_all(&bytes, 0) {
-        Ok(ins) => ins,
-        Err(why) => {
-            eprintln!("Could not disassemble bytes: {why}");
-            return;
+    let mut addr = 0;
+    while let Some(bytes_slice) = bytes.get(addr..) {
+        if let Ok(instructions) = cs.disasm_count(bytes_slice, addr as u64, 1) {
+            if let Some(ins) = instructions.first() {
+                display_instruction(ins);
+                addr += ins.len();
+                continue;
+            }
         }
-    };
 
-    println!("{instructions}");
+        if let Some(b) = bytes_slice.first() {
+            display_invalid_byte(addr as u64, *b);
+        }
+
+        addr += 1;
+    }
 }
