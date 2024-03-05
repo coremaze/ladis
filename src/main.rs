@@ -19,6 +19,7 @@ enum Architecture {
     Sparc,
     Sysz,
     Tms320c64x,
+    X86_16,
     X86_32,
     X86_64,
     Xcore,
@@ -108,6 +109,12 @@ fn get_capstone(arch: Architecture) -> Result<Capstone, Error> {
         Architecture::Tms320c64x => Capstone::new()
             .tms320c64x()
             .mode(arch::tms320c64x::ArchMode::Default)
+            .detail(true)
+            .build(),
+        Architecture::X86_16 => Capstone::new()
+            .x86()
+            .mode(arch::x86::ArchMode::Mode16)
+            .syntax(arch::x86::ArchSyntax::Intel)
             .detail(true)
             .build(),
         Architecture::X86_32 => Capstone::new()
