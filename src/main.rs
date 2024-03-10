@@ -183,7 +183,7 @@ fn main() {
     let hex_data: String = args
         .hex_data
         .chars()
-        .filter(|x| !x.is_whitespace())
+        .filter(|x| x.is_ascii_hexdigit())
         .collect();
 
     let bytes = match <Vec<u8>>::from_hex(hex_data) {
